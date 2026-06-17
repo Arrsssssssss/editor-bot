@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from datetime import datetime
@@ -24,6 +25,7 @@ class SheetsError(Exception):
 
 class SheetsClient:
     def __init__(self):
+        self._creds_json = os.getenv("GOOGLE_CREDS_JSON")
         self._creds_file = os.getenv("GOOGLE_CREDS_FILE", "creds.json")
         self._sheet_id = os.environ["GOOGLE_SHEET_ID"]
         self._sheet = None
@@ -36,7 +38,10 @@ class SheetsClient:
 
     def _connect(self):
         try:
-            gc = gspread.service_account(filename=self._creds_file)
+            if self._creds_json:
+                gc = gspread.service_account_from_dict(json.loads(self._creds_json))
+            else:
+                gc = gspread.service_account(filename=self._creds_file)
             self._sheet = gc.open_by_key(self._sheet_id).sheet1
         except Exception as e:
             raise SheetsError(f"Не удалось подключиться к Google Sheets: {e}") from e
