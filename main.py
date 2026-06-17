@@ -223,6 +223,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 # ---------------------------------------------------------------------------
 
 async def _post_init(application: Application) -> None:
+    await application.bot.delete_webhook(drop_pending_updates=True)
     tz = pytz.timezone(TIMEZONE)
     scheduler = AsyncIOScheduler(timezone=tz)
     scheduler.add_job(
