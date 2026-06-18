@@ -37,15 +37,35 @@ class SheetsClient:
         return self._sheet
 
     def _connect(self):
+        import traceback
         try:
             if self._creds_json:
+                # [DIAG 1] проверяем что переменная читается
+                logger.info("[DIAG 1] GOOGLE_CREDS_JSON первые 100 символов: %r", self._creds_json[:100])
+
                 creds_dict = json.loads(self._creds_json)
-                creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+                raw_key = creds_dict["private_key"]
+
+                # [DIAG 2] тип и длина до replace
+                logger.info("[DIAG 2] private_key до replace: type=%s len=%d", type(raw_key).__name__, len(raw_key))
+
+                fixed_key = raw_key.replace("\\n", "\n")
+                creds_dict["private_key"] = fixed_key
+
+                # [DIAG 3] тип и длина после replace
+                logger.info("[DIAG 3] private_key после replace: type=%s len=%d", type(fixed_key).__name__, len(fixed_key))
+
+                # [DIAG 4] начало и конец ключа
+                logger.info("[DIAG 4] private_key начало: %r", fixed_key[:50])
+                logger.info("[DIAG 4] private_key конец:  %r", fixed_key[-50:])
+
                 gc = gspread.service_account_from_dict(creds_dict)
             else:
+                logger.info("[DIAG] GOOGLE_CREDS_JSON не задан, используем файл: %s", self._creds_file)
                 gc = gspread.service_account(filename=self._creds_file)
             self._sheet = gc.open_by_key(self._sheet_id).sheet1
         except Exception as e:
+            logger.error("[DIAG] Полный traceback:\n%s", traceback.format_exc())
             raise SheetsError(f"Не удалось подключиться к Google Sheets: {e}") from e
 
     def _reset(self):
