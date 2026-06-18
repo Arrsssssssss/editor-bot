@@ -39,7 +39,9 @@ class SheetsClient:
     def _connect(self):
         try:
             if self._creds_json:
-                gc = gspread.service_account_from_dict(json.loads(self._creds_json))
+                creds_dict = json.loads(self._creds_json)
+                creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+                gc = gspread.service_account_from_dict(creds_dict)
             else:
                 gc = gspread.service_account(filename=self._creds_file)
             self._sheet = gc.open_by_key(self._sheet_id).sheet1
